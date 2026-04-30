@@ -1,0 +1,6 @@
+{
+  "model": "LightGBM",
+  "mae": 514.10,
+  "r2": 0.703,
+  "n_samples": 1152
+}
