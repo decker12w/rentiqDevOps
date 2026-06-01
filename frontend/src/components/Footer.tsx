@@ -1,4 +1,5 @@
 import { Building2, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function Footer() {
   return (
@@ -11,13 +12,13 @@ export function Footer() {
             — Previsão inteligente de aluguéis.
           </span>
         </div>
-        <a
-          href="#"
+        <Link
+          to="/como-funciona"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:underline"
         >
           Como funciona o modelo de previsão
           <ExternalLink className="h-3.5 w-3.5" />
-        </a>
+        </Link>
       </div>
     </footer>
   );

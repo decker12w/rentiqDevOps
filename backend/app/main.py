@@ -7,6 +7,8 @@ from app.database import create_db
 from app.routes.neighborhoods import router as neighborhoods_router
 from app.routes.predictions import router as predictions_router
 from app.routes.model import router as model_router
+from app.routes.auth import router as auth_router
+from app.routes.listings import router as listings_router
 
 
 @asynccontextmanager
@@ -28,3 +30,5 @@ application.add_middleware(
 application.include_router(neighborhoods_router, prefix="/api")
 application.include_router(predictions_router, prefix="/api")
 application.include_router(model_router, prefix="/api")
+application.include_router(auth_router, prefix="/api")
+application.include_router(listings_router, prefix="/api")

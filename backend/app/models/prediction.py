@@ -1,5 +1,6 @@
 from sqlmodel import SQLModel, Field
 from datetime import datetime
+from typing import Optional
 from app.models.utils import utcnow, new_ulid
 
 
@@ -15,3 +16,4 @@ class Prediction(SQLModel, table=True):
     price_min: float
     price_max: float
     created_at: datetime = Field(default_factory=utcnow)
+    user_id: Optional[str] = Field(default=None, foreign_key="users.id", index=True)

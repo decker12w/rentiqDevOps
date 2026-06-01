@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     # ml model
     MODEL_PATH: str = "models/modelo_aluguel.pkl"
 
+    # auth
+    JWT_SECRET: str = "dev-secret-change-in-production"
+
     # app
     STAGE: str = "development"
     DEBUG: bool = False
