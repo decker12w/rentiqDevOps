@@ -12,7 +12,7 @@ O modelo preditivo é um **LightGBM** treinado com 1.152 amostras, com R² de 0,
 
 | Camada            | Tecnologia                      |
 | ----------------- | ------------------------------- |
-| Frontend          | React 18 + TypeScript + Vite    |
+| Frontend          | React 19 + TypeScript + Vite    |
 | Backend           | FastAPI + Uvicorn (Python 3.12) |
 | ML                | LightGBM, scikit-learn, pandas  |
 | Banco de dados    | PostgreSQL 16                   |
@@ -64,6 +64,7 @@ ALLOWED_ORIGINS=["http://localhost"]
 MODEL_PATH=models/modelo_aluguel.pkl
 STAGE=production
 DEBUG=false
+JWT_SECRET=troque-por-uma-chave-segura
 ```
 
 **3. Suba os contêineres**
@@ -74,12 +75,11 @@ docker compose up --build
 
 **4. Acesse**
 
-| Serviço                           | URL                         |
-| --------------------------------- | --------------------------- |
-| Interface web                     | http://localhost            |
-| API REST                          | http://localhost:8000       |
-| Documentação interativa (Swagger) | http://localhost:8000/docs  |
-| ReDoc                             | http://localhost:8000/redoc |
+| Serviço      | URL              |
+| ------------ | ---------------- |
+| Interface web | http://localhost |
+
+> A API (porta 8000) não é exposta diretamente — o Nginx faz o proxy de `/api/` para o backend internamente.
 
 ### Parar
 
@@ -143,6 +143,7 @@ ALLOWED_ORIGINS=["http://localhost:5173"]
 MODEL_PATH=models/modelo_aluguel.pkl
 STAGE=development
 DEBUG=true
+JWT_SECRET=dev-secret-qualquer
 ```
 
 Instale as dependências e crie as tabelas:
@@ -195,11 +196,16 @@ rentiq/
 
 ## API — Endpoints Principais
 
-| Método | Rota                 | Descrição                    |
-| ------ | -------------------- | ---------------------------- |
-| `GET`  | `/api/neighborhoods` | Lista bairros disponíveis    |
-| `POST` | `/api/predictions`   | Retorna predição de preço    |
-| `GET`  | `/api/model/metrics` | Métricas do modelo (R², MAE) |
+| Método | Rota                   | Auth | Descrição                              |
+| ------ | ---------------------- | ---- | -------------------------------------- |
+| `GET`  | `/api/neighborhoods`   | —    | Lista bairros disponíveis              |
+| `GET`  | `/api/model/metrics`   | —    | Métricas do modelo (R², MAE)           |
+| `POST` | `/api/predictions`     | —    | Gera predição de preço                 |
+| `GET`  | `/api/predictions`     | JWT  | Histórico de predições do usuário      |
+| `POST` | `/api/auth/register`   | —    | Cadastro de usuário (retorna JWT)      |
+| `POST` | `/api/auth/login`      | —    | Login de usuário (retorna JWT)         |
+| `GET`  | `/api/listings`        | JWT  | Lista imóveis cadastrados pelo usuário |
+| `POST` | `/api/listings`        | JWT  | Cadastra imóvel e retorna estimativa   |
 
 ### Exemplo de requisição
 
