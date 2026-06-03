@@ -2,6 +2,10 @@
 
 Aplicação web para predição de preços de aluguel de imóveis em São Carlos (SP), com modelo de machine learning treinado sobre dados reais coletados via scraper.
 
+## Demo
+
+[Assista ao vídeo explicando como usar a aplicação](https://drive.google.com/file/d/1OpxoHdszFuQLldOafGrZ9jrLgVoTGrbQ/view?usp=sharing)
+
 ## Visão Geral
 
 O usuário informa as características do imóvel — tipo (apartamento ou casa), bairro, área, quartos, banheiros e vagas — e recebe uma estimativa de aluguel com faixa de preço (mínimo/máximo) e os fatores que mais influenciaram o resultado.
@@ -75,11 +79,20 @@ docker compose up --build
 
 **4. Acesse**
 
-| Serviço      | URL              |
-| ------------ | ---------------- |
+| Serviço       | URL              |
+| ------------- | ---------------- |
 | Interface web | http://localhost |
 
 > A API (porta 8000) não é exposta diretamente — o Nginx faz o proxy de `/api/` para o backend internamente.
+
+### Credenciais de demonstração
+
+O seed cria automaticamente um usuário para acesso imediato:
+
+| Campo | Valor             |
+| ----- | ----------------- |
+| Email | `demo@rentiq.com` |
+| Senha | `rentiq123`       |
 
 ### Parar
 
@@ -151,7 +164,7 @@ Instale as dependências e crie as tabelas:
 ```bash
 uv sync
 make db       # cria as tabelas no banco
-make seed     # popula os bairros
+make seed     # popula os bairros e cria o usuário demo (demo@rentiq.com / rentiq123)
 ```
 
 Inicie a API em modo de desenvolvimento (com hot-reload):
@@ -170,7 +183,7 @@ bun install
 bun run dev
 ```
 
-O frontend estará disponível em http://localhost:5173.
+O frontend estará disponível em http://localhost:8080.
 
 ## Estrutura do Repositório
 
@@ -196,16 +209,16 @@ rentiq/
 
 ## API — Endpoints Principais
 
-| Método | Rota                   | Auth | Descrição                              |
-| ------ | ---------------------- | ---- | -------------------------------------- |
-| `GET`  | `/api/neighborhoods`   | —    | Lista bairros disponíveis              |
-| `GET`  | `/api/model/metrics`   | —    | Métricas do modelo (R², MAE)           |
-| `POST` | `/api/predictions`     | —    | Gera predição de preço                 |
-| `GET`  | `/api/predictions`     | JWT  | Histórico de predições do usuário      |
-| `POST` | `/api/auth/register`   | —    | Cadastro de usuário (retorna JWT)      |
-| `POST` | `/api/auth/login`      | —    | Login de usuário (retorna JWT)         |
-| `GET`  | `/api/listings`        | JWT  | Lista imóveis cadastrados pelo usuário |
-| `POST` | `/api/listings`        | JWT  | Cadastra imóvel e retorna estimativa   |
+| Método | Rota                 | Auth | Descrição                              |
+| ------ | -------------------- | ---- | -------------------------------------- |
+| `GET`  | `/api/neighborhoods` | —    | Lista bairros disponíveis              |
+| `GET`  | `/api/model/metrics` | —    | Métricas do modelo (R², MAE)           |
+| `POST` | `/api/predictions`   | —    | Gera predição de preço                 |
+| `GET`  | `/api/predictions`   | JWT  | Histórico de predições do usuário      |
+| `POST` | `/api/auth/register` | —    | Cadastro de usuário (retorna JWT)      |
+| `POST` | `/api/auth/login`    | —    | Login de usuário (retorna JWT)         |
+| `GET`  | `/api/listings`      | JWT  | Lista imóveis cadastrados pelo usuário |
+| `POST` | `/api/listings`      | JWT  | Cadastra imóvel e retorna estimativa   |
 
 ### Exemplo de requisição
 

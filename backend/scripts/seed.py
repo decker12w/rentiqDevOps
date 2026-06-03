@@ -10,6 +10,11 @@ from sqlmodel import Session, select
 from app.database import engine, create_db
 from app.models.listing import Listing
 from app.models.neighborhood import Neighborhood
+from app.models.user import User
+from app.services.auth import hash_password
+
+DEMO_EMAIL = "demo@rentiq.com"
+DEMO_PASSWORD = "rentiq123"
 
 PROJECT_ROOT = Path(__file__).parents[2]
 LISTINGS_CSV = PROJECT_ROOT / "data" / "todos_imoveis.csv"
@@ -99,8 +104,20 @@ def seed_listings(session: Session):
     print(f"seeded {len(records)} listings")
 
 
+def seed_user(session: Session):
+    if session.exec(select(User).where(User.email == DEMO_EMAIL)).first():
+        print("demo user already exists, skipping")
+        return
+
+    user = User(email=DEMO_EMAIL, password_hash=hash_password(DEMO_PASSWORD))
+    session.add(user)
+    session.commit()
+    print(f"demo user created — email: {DEMO_EMAIL}  password: {DEMO_PASSWORD}")
+
+
 if __name__ == "__main__":
     create_db()
     with Session(engine) as session:
         seed_neighborhoods(session)
         seed_listings(session)
+        seed_user(session)
