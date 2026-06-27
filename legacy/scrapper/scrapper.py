@@ -1,6 +1,6 @@
 import argparse
 
-from scrapers import SCRAPERS, FIELDNAMES, OUTPUT_DIR
+from am2.legacy.scrapper.scrapers import SCRAPERS, FIELDNAMES, OUTPUT_DIR
 
 import csv
 from pathlib import Path

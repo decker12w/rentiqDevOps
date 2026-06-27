@@ -4,7 +4,7 @@ import time
 import requests
 from bs4 import BeautifulSoup
 
-from scrapers.base import HEADERS, BaseScraper
+from am2.legacy.scrapper.scrapers.base import HEADERS, BaseScraper
 
 BASE_URL = "https://www.sapeimoveis.com.br"
 
