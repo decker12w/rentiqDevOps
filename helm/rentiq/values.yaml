@@ -1,0 +1,64 @@
+# Ingress de entrada da aplicação (acessível em http://k8s.local)
+ingress:
+  enabled: true
+  className: nginx
+  host: k8s.local
+
+# Banco de dados PostgreSQL
+db:
+  image:
+    repository: postgres
+    tag: "16-alpine"
+  user: postgres
+  password: postgres
+  database: am
+  port: 5432
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClassName: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Backend (FastAPI + Uvicorn)
+backend:
+  image:
+    repository: seu-usuario-dockerhub/rentiq-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  port: 8000
+  env:
+    allowedOrigins: '["http://k8s.local"]'
+    modelPath: "models/modelo_aluguel.pkl"
+    stage: production
+    debug: "false"
+  jwtSecret: dev-secret-change-in-production
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+# Frontend (React + Nginx)
+frontend:
+  image:
+    repository: seu-usuario-dockerhub/rentiq-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  port: 80
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi

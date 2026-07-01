@@ -20,7 +20,7 @@ COPY --from=builder /app/.venv /app/.venv
 COPY backend/app ./app
 COPY backend/scripts ./scripts
 COPY models ./models
-COPY data /data
+COPY legacy/data /data
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app"

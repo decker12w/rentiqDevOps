@@ -1,0 +1,6 @@
+apiVersion: v2
+name: rentiq
+description: Helm chart para a aplicação RentIQ (frontend + backend + PostgreSQL) no Kubernetes/Minikube
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

@@ -24,6 +24,7 @@ O modelo preditivo é um **LightGBM** treinado com 1.152 amostras, com R² de 0,
 | Pacotes Node      | Bun                             |
 | Servidor estático | Nginx                           |
 | Contêineres       | Docker + Docker Compose         |
+| Orquestração      | Kubernetes (Minikube) + Helm    |
 
 ## Arquitetura
 
@@ -39,6 +40,99 @@ Três contêineres orquestrados via `docker-compose.yml`:
 - **`db`** — PostgreSQL 16, persiste bairros e histórico de predições em volume nomeado
 - **`backend`** — API REST (FastAPI), carrega o modelo LightGBM serializado em disco
 - **`frontend`** — SPA React compilada servida pelo Nginx
+
+## Execução com Kubernetes (Minikube + Helm)
+
+A aplicação também pode ser implantada em um cluster Kubernetes local via [Minikube](https://minikube.sigs.k8s.io/), usando o Helm Chart disponível em [`helm/rentiq`](helm/rentiq).
+
+### Pré-requisitos
+
+- [Docker](https://docs.docker.com/get-docker/) >= 24
+- [Minikube](https://minikube.sigs.k8s.io/docs/start/) >= 1.30
+- [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
+- [Helm](https://helm.sh/docs/intro/install/) >= 3
+
+### Arquitetura no Kubernetes
+
+| Recurso                 | Objeto Kubernetes      | Descrição                                              |
+| ------------------------ | ----------------------- | ------------------------------------------------------- |
+| `db`                      | Deployment + Service    | PostgreSQL 16, dados persistidos em `PersistentVolumeClaim` |
+| `db-secret`               | Secret                  | Usuário/senha/nome do banco                             |
+| `backend`                 | Deployment + Service    | API FastAPI, com `initContainer` que aguarda o banco subir |
+| `backend-secret`          | Secret                  | `DATABASE_URL` e `JWT_SECRET`                            |
+| `backend-config`          | ConfigMap                | `ALLOWED_ORIGINS`, `MODEL_PATH`, `STAGE`, `DEBUG`        |
+| `frontend`                | Deployment + Service    | SPA React servida pelo Nginx                             |
+| `rentiq-ingress`          | Ingress                 | Publica o `frontend` em `http://k8s.local`               |
+
+### Passo a Passo
+
+**1. Inicie o Minikube**
+
+```bash
+minikube start --driver=docker
+minikube addons enable ingress
+```
+
+**2. Construa e publique as imagens no Docker Hub**
+
+Use o script [`scripts/k8s-build-push.sh`](scripts/k8s-build-push.sh), que builda as imagens do backend e frontend, faz o `docker push` para o Docker Hub e, se o Minikube estiver rodando, já carrega as imagens nele via `minikube image load`:
+
+```bash
+./scripts/k8s-build-push.sh <seu-usuario-dockerhub> latest
+```
+
+> Alternativa sem Docker Hub (apenas para testes locais): builde as imagens com `docker build` e use `minikube image load <imagem>` diretamente, sobrescrevendo `backend.image.repository`/`frontend.image.repository` no passo seguinte.
+
+**3. Instale o Helm Chart**
+
+```bash
+helm upgrade --install rentiq ./helm/rentiq -n rentiq --create-namespace \
+  --set backend.image.repository=<seu-usuario-dockerhub>/rentiq-backend \
+  --set frontend.image.repository=<seu-usuario-dockerhub>/rentiq-frontend \
+  --set backend.image.tag=latest \
+  --set frontend.image.tag=latest
+```
+
+Acompanhe os pods:
+
+```bash
+kubectl get pods,svc,ingress -n rentiq
+```
+
+**4. Publique o serviço em `k8s.local`**
+
+Em um terminal separado (mantenha em execução):
+
+```bash
+minikube tunnel
+```
+
+Em outro terminal, adicione o host ao `/etc/hosts` (uma única vez):
+
+```bash
+echo "127.0.0.1  k8s.local" | sudo tee -a /etc/hosts
+```
+
+**5. Acesse**
+
+| Serviço       | URL              |
+| ------------- | ---------------- |
+| Interface web | http://k8s.local |
+
+As credenciais de demonstração são as mesmas do Docker Compose (`demo@rentiq.com` / `rentiq123`).
+
+### Customizando valores
+
+Todos os parâmetros (réplicas, recursos, credenciais do banco, host do Ingress etc.) estão em [`helm/rentiq/values.yaml`](helm/rentiq/values.yaml) e podem ser sobrescritos via `--set` ou `-f meus-valores.yaml` no `helm upgrade --install`.
+
+### Remover
+
+```bash
+helm uninstall rentiq -n rentiq      # remove a aplicação
+minikube delete                      # destrói o cluster (opcional)
+```
+
+---
 
 ## Execução com Docker Compose
 
@@ -201,9 +295,21 @@ rentiq/
 │   ├── Dockerfile
 │   └── nginx.conf
 ├── models/                # Modelo LightGBM serializado + métricas
-├── pre_processing/        # Scripts de pré-processamento
-├── scrapper/              # Scripts de coleta de dados
-├── data/                  # Dados brutos e processados
+├── helm/
+│   └── rentiq/             # Helm Chart (Deployments, Services, Secrets, ConfigMap, Ingress)
+│       ├── Chart.yaml
+│       ├── values.yaml
+│       └── templates/
+│           ├── db/
+│           ├── backend/
+│           ├── frontend/
+│           └── ingress.yaml
+├── scripts/
+│   └── k8s-build-push.sh  # Build + push das imagens para o Docker Hub + minikube image load
+├── legacy/                 # Pipeline de ML/scraping (fora do escopo de implantação)
+│   ├── pre_processing/
+│   ├── scrapper/
+│   └── data/
 └── docker-compose.yml
 ```
 
