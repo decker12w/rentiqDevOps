@@ -6,6 +6,7 @@ ingress:
 
 # Banco de dados PostgreSQL
 db:
+  name: db
   image:
     repository: postgres
     tag: "16-alpine"
@@ -30,6 +31,7 @@ db:
 
 # Backend (FastAPI + Uvicorn)
 backend:
+  name: backend
   image:
     repository: josemaia123/rentiq-backend
     tag: latest
@@ -60,6 +62,7 @@ backend:
 
 # Frontend (React + Nginx)
 frontend:
+  name: frontend
   image:
     repository: josemaia123/rentiq-frontend
     tag: latest

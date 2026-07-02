@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: db
   labels:
-    app: db
+    app: {{ .Values.db.name }}
     {{- include "rentiq.labels" . | nindent 4 }}
 spec:
   replicas: 1
@@ -11,11 +11,11 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: db
+      app: {{ .Values.db.name }}
   template:
     metadata:
       labels:
-        app: db
+        app: {{ .Values.db.name }}
     spec:
       containers:
         - name: db

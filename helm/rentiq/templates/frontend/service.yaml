@@ -3,11 +3,11 @@ kind: Service
 metadata:
   name: {{ .Values.frontend.serviceName }}
   labels:
-    app: frontend
+    app: {{ .Values.frontend.name }}
     {{- include "rentiq.labels" . | nindent 4 }}
 spec:
   selector:
-    app: frontend
+    app: {{ .Values.frontend.name }}
   ports:
     - port: {{ .Values.frontend.port }}
       targetPort: {{ .Values.frontend.port }}

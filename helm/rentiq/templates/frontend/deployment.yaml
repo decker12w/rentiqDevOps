@@ -3,17 +3,17 @@ kind: Deployment
 metadata:
   name: frontend
   labels:
-    app: frontend
+    app: {{ .Values.frontend.name }}
     {{- include "rentiq.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.frontend.replicaCount }}
   selector:
     matchLabels:
-      app: frontend
+      app: {{ .Values.frontend.name }}
   template:
     metadata:
       labels:
-        app: frontend
+        app: {{ .Values.frontend.name }}
     spec:
       containers:
         - name: frontend

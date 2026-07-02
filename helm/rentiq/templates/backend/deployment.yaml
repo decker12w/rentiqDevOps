@@ -3,17 +3,17 @@ kind: Deployment
 metadata:
   name: backend
   labels:
-    app: backend
+    app: {{ .Values.backend.name }}
     {{- include "rentiq.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.backend.replicaCount }}
   selector:
     matchLabels:
-      app: backend
+      app: {{ .Values.backend.name }}
   template:
     metadata:
       labels:
-        app: backend
+        app: {{ .Values.backend.name }}
     spec:
       initContainers:
         - name: wait-for-db
