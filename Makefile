@@ -31,8 +31,13 @@ k8s-build:
 k8s-up:
 	minikube start --profile=$(MINIKUBE_PROFILE)
 	minikube addons enable ingress --profile=$(MINIKUBE_PROFILE)
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/component=controller -n ingress-nginx --timeout=90s
 	$(MAKE) k8s-build
-	helm upgrade --install $(RELEASE) helm/rentiq -n $(NAMESPACE) --create-namespace
+	for i in 1 2 3 4 5; do \
+		helm upgrade --install $(RELEASE) helm/rentiq -n $(NAMESPACE) --create-namespace && break; \
+		echo "helm upgrade falhou (webhook do ingress ainda propagando), tentando de novo em 5s... ($$i/5)"; \
+		sleep 5; \
+	done
 	kubectl rollout status deployment/db -n $(NAMESPACE) --timeout=120s
 	kubectl rollout status deployment/backend -n $(NAMESPACE) --timeout=120s
 	kubectl rollout status deployment/frontend -n $(NAMESPACE) --timeout=120s
@@ -48,13 +53,18 @@ k8s-push:
 k8s-up-pull:
 	minikube start --profile=$(MINIKUBE_PROFILE)
 	minikube addons enable ingress --profile=$(MINIKUBE_PROFILE)
-	helm upgrade --install $(RELEASE) helm/rentiq -n $(NAMESPACE) --create-namespace \
-		--set backend.image.repository=$(BACKEND_IMAGE) \
-		--set backend.image.tag=$(TAG) \
-		--set backend.image.pullPolicy=Always \
-		--set frontend.image.repository=$(FRONTEND_IMAGE) \
-		--set frontend.image.tag=$(TAG) \
-		--set frontend.image.pullPolicy=Always
+	kubectl wait --for=condition=ready pod -l app.kubernetes.io/component=controller -n ingress-nginx --timeout=90s
+	for i in 1 2 3 4 5; do \
+		helm upgrade --install $(RELEASE) helm/rentiq -n $(NAMESPACE) --create-namespace \
+			--set backend.image.repository=$(BACKEND_IMAGE) \
+			--set backend.image.tag=$(TAG) \
+			--set backend.image.pullPolicy=Always \
+			--set frontend.image.repository=$(FRONTEND_IMAGE) \
+			--set frontend.image.tag=$(TAG) \
+			--set frontend.image.pullPolicy=Always && break; \
+		echo "helm upgrade falhou (webhook do ingress ainda propagando), tentando de novo em 5s... ($$i/5)"; \
+		sleep 5; \
+	done
 	kubectl rollout status deployment/db -n $(NAMESPACE) --timeout=120s
 	kubectl rollout status deployment/backend -n $(NAMESPACE) --timeout=120s
 	kubectl rollout status deployment/frontend -n $(NAMESPACE) --timeout=120s

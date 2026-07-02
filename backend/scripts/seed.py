@@ -1,3 +1,4 @@
+import os
 import sys
 import re
 import unicodedata
@@ -16,9 +17,9 @@ from app.services.auth import hash_password
 DEMO_EMAIL = "demo@rentiq.com"
 DEMO_PASSWORD = "rentiq123"
 
-PROJECT_ROOT = Path(__file__).parents[2]
-LISTINGS_CSV = PROJECT_ROOT / "data" / "todos_imoveis.csv"
-NEIGHBORHOODS_CSV = PROJECT_ROOT / "data" / "bairros_geocode.csv"
+DATA_DIR = Path(os.environ.get("SEED_DATA_DIR", Path(__file__).parents[2] / "legacy" / "data"))
+LISTINGS_CSV = DATA_DIR / "todos_imoveis.csv"
+NEIGHBORHOODS_CSV = DATA_DIR / "bairros_geocode.csv"
 
 ABBREV = {
     r"\bjd\b": "jardim",

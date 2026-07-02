@@ -25,6 +25,7 @@ COPY legacy/data /data
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app"
 ENV STAGE=production
+ENV SEED_DATA_DIR=/data
 
 EXPOSE 8000
 
