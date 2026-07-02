@@ -4,7 +4,6 @@ metadata:
   name: {{ .Values.db.name }}
   labels:
     app: {{ .Values.db.name }}
-    {{- include "rentiq.labels" . | nindent 4 }}
 spec:
   replicas: 1
   strategy:

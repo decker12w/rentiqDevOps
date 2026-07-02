@@ -4,7 +4,6 @@ metadata:
   name: {{ .Values.frontend.serviceName }}
   labels:
     app: {{ .Values.frontend.name }}
-    {{- include "rentiq.labels" . | nindent 4 }}
 spec:
   selector:
     app: {{ .Values.frontend.name }}

@@ -2,8 +2,6 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Values.backend.name }}-config
-  labels:
-    {{- include "rentiq.labels" . | nindent 4 }}
 data:
   ALLOWED_ORIGINS: {{ .Values.backend.env.allowedOrigins | quote }}
   MODEL_PATH: {{ .Values.backend.env.modelPath | quote }}

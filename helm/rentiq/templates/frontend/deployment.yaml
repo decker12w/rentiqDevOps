@@ -4,7 +4,6 @@ metadata:
   name: {{ .Values.frontend.name }}
   labels:
     app: {{ .Values.frontend.name }}
-    {{- include "rentiq.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.frontend.replicaCount }}
   selector:
