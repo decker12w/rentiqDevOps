@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend
+  name: {{ .Values.backend.name }}
   labels:
     app: {{ .Values.backend.name }}
     {{- include "rentiq.labels" . | nindent 4 }}
@@ -22,7 +22,7 @@ spec:
             - sh
             - -c
             - |
-              until pg_isready -h db -p {{ .Values.db.port }} -U {{ .Values.db.user }}; do
+              until pg_isready -h {{ .Values.db.name }} -p {{ .Values.db.port }} -U {{ .Values.db.user }}; do
                 echo "Aguardando o banco de dados...";
                 sleep 2;
               done
@@ -34,9 +34,9 @@ spec:
             - containerPort: {{ .Values.backend.port }}
           envFrom:
             - configMapRef:
-                name: backend-config
+                name: {{ .Values.backend.name }}-config
             - secretRef:
-                name: backend-secret
+                name: {{ .Values.backend.name }}-secret
           readinessProbe:
             httpGet:
               path: {{ .Values.backend.healthCheckPath }}

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: db
+  name: {{ .Values.db.name }}
   labels:
     app: {{ .Values.db.name }}
     {{- include "rentiq.labels" . | nindent 4 }}
@@ -24,7 +24,7 @@ spec:
             - containerPort: {{ .Values.db.port }}
           envFrom:
             - secretRef:
-                name: db-secret
+                name: {{ .Values.db.name }}-secret
           volumeMounts:
             - name: db-data
               mountPath: /var/lib/postgresql/data
