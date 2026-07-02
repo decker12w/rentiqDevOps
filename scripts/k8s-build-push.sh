@@ -5,7 +5,7 @@
 # Uso: ./scripts/k8s-build-push.sh <usuario-dockerhub> [tag]
 set -euo pipefail
 
-DOCKERHUB_USER="${1:-${DOiCKERHUB_USER:-}}"
+DOCKERHUB_USER="${1:-${DOCKERHUB_USER:-}}"
 TAG="${2:-latest}"
 
 if [[ -z "${DOCKERHUB_USER}" ]]; then

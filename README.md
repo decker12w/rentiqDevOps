@@ -56,34 +56,88 @@ A aplicação também pode ser implantada em um cluster Kubernetes local via [Mi
 
 | Recurso                 | Objeto Kubernetes      | Descrição                                              |
 | ------------------------ | ----------------------- | ------------------------------------------------------- |
-| `db`                      | Deployment + Service    | PostgreSQL 16, dados persistidos em `PersistentVolumeClaim` |
+| `db`                      | Deployment + Service    | PostgreSQL 16, armazenamento efêmero (`emptyDir` — dados resetam a cada restart do pod) |
 | `db-secret`               | Secret                  | Usuário/senha/nome do banco                             |
-| `backend`                 | Deployment + Service    | API FastAPI, com `initContainer` que aguarda o banco subir |
+| `backend`                 | Deployment + Service    | API FastAPI, com `initContainer` que aguarda o banco subir; probes usam `GET /health` |
 | `backend-secret`          | Secret                  | `DATABASE_URL` e `JWT_SECRET`                            |
 | `backend-config`          | ConfigMap                | `ALLOWED_ORIGINS`, `MODEL_PATH`, `STAGE`, `DEBUG`        |
-| `frontend`                | Deployment + Service    | SPA React servida pelo Nginx                             |
+| `frontend`                | Deployment + Service    | SPA React servida pelo Nginx, com proxy reverso de `/api/` para o `backend` |
 | `rentiq-ingress`          | Ingress                 | Publica o `frontend` em `http://k8s.local`               |
 
-### Passo a Passo
+O deploy inteiro é automatizado por targets do [`Makefile`](Makefile) — não é preciso rodar `helm`/`minikube` manualmente. As duas primeiras opções abaixo usam o Makefile; a terceira mostra os comandos crus, caso queira entender ou depurar o que está por trás.
 
-**1. Inicie o Minikube**
+### Opção 1 — Deploy a partir do Docker Hub (recomendado)
+
+As imagens já estão publicadas no Docker Hub (`josemaia123/rentiq-backend` e `josemaia123/rentiq-frontend`), então basta rodar o deploy puxando de lá:
+
+```bash
+make k8s-up-pull   # deploy puxando as imagens já publicadas do Docker Hub (pullPolicy=Always)
+```
+
+Só preencha `DOCKERHUB_USER=<seu-usuario-dockerhub>` se você quiser buildar e publicar sua própria versão das imagens em vez de usar as já disponíveis:
+
+```bash
+make DOCKERHUB_USER=<seu-usuario-dockerhub> TAG=latest k8s-push     # builda, dá push e (se o minikube estiver de pé) já carrega nele
+make DOCKERHUB_USER=<seu-usuario-dockerhub> TAG=latest k8s-up-pull  # deploy puxando as suas imagens do Docker Hub
+```
+
+Configuração manual única, exige `sudo` (por isso não é automatizada):
+
+```bash
+echo "127.0.0.1  k8s.local" | sudo tee -a /etc/hosts
+sudo minikube tunnel   # rodar num terminal à parte e deixar em execução
+```
+
+Acesse em http://k8s.local. Credenciais de demonstração: `demo@rentiq.com` / `rentiq123`.
+
+### Opção 2 — Build local, sem Docker Hub (iteração rápida)
+
+Sem depender de internet/registry — builda as imagens direto no daemon Docker do minikube:
+
+```bash
+make k8s-up
+```
+
+Isso faz, em ordem: `minikube start`, ativa o addon `ingress`, builda as imagens de backend e frontend direto no minikube, roda `helm upgrade --install` e espera os três Deployments (`db`, `backend`, `frontend`) ficarem prontos. Precisa da mesma configuração manual (`/etc/hosts` + `minikube tunnel`) acima.
+
+Depois de qualquer mudança no código, rode `make k8s-up` de novo — é idempotente (`helm upgrade --install` só reaplica o que mudou).
+
+### Opção 3 — Caminho das pedras (passo a passo manual, sem Makefile)
+
+Útil pra entender o que os targets acima fazem por baixo, ou pra depurar quando algo dá errado.
+
+**1. Suba o cluster**
 
 ```bash
 minikube start --driver=docker
 minikube addons enable ingress
 ```
 
-**2. Construa e publique as imagens no Docker Hub**
+**2. (Opcional) Builde e publique suas próprias imagens**
 
-Use o script [`scripts/k8s-build-push.sh`](scripts/k8s-build-push.sh), que builda as imagens do backend e frontend, faz o `docker push` para o Docker Hub e, se o Minikube estiver rodando, já carrega as imagens nele via `minikube image load`:
+As imagens já estão publicadas em `josemaia123/rentiq-backend` e `josemaia123/rentiq-frontend` — pule esse passo se quiser só usar as já disponíveis. Se quiser publicar a sua versão:
 
 ```bash
 ./scripts/k8s-build-push.sh <seu-usuario-dockerhub> latest
 ```
 
-> Alternativa sem Docker Hub (apenas para testes locais): builde as imagens com `docker build` e use `minikube image load <imagem>` diretamente, sobrescrevendo `backend.image.repository`/`frontend.image.repository` no passo seguinte.
+Ou, sem Docker Hub — builde direto dentro do minikube:
+
+```bash
+eval $(minikube docker-env)
+docker build -f backend/Dockerfile -t <seu-usuario-dockerhub>/rentiq-backend:latest .
+docker build -t <seu-usuario-dockerhub>/rentiq-frontend:latest frontend/
+```
 
 **3. Instale o Helm Chart**
+
+O `values.yaml` já aponta pras imagens de `josemaia123`, então instalar sem nenhum `--set` já funciona:
+
+```bash
+helm upgrade --install rentiq ./helm/rentiq -n rentiq --create-namespace
+```
+
+Se você publicou suas próprias imagens no passo anterior, aponte pra elas:
 
 ```bash
 helm upgrade --install rentiq ./helm/rentiq -n rentiq --create-namespace \
@@ -104,7 +158,7 @@ kubectl get pods,svc,ingress -n rentiq
 Em um terminal separado (mantenha em execução):
 
 ```bash
-minikube tunnel
+sudo minikube tunnel
 ```
 
 Em outro terminal, adicione o host ao `/etc/hosts` (uma única vez):
@@ -123,13 +177,14 @@ As credenciais de demonstração são as mesmas do Docker Compose (`demo@rentiq.
 
 ### Customizando valores
 
-Todos os parâmetros (réplicas, recursos, credenciais do banco, host do Ingress etc.) estão em [`helm/rentiq/values.yaml`](helm/rentiq/values.yaml) e podem ser sobrescritos via `--set` ou `-f meus-valores.yaml` no `helm upgrade --install`.
+Todos os parâmetros (réplicas, recursos, credenciais do banco, host do Ingress, timings de probe etc.) estão em [`helm/rentiq/values.yaml`](helm/rentiq/values.yaml) e podem ser sobrescritos via `--set` ou `-f meus-valores.yaml` num `helm upgrade --install` manual, se preferir não usar o Makefile.
 
 ### Remover
 
 ```bash
-helm uninstall rentiq -n rentiq      # remove a aplicação
-minikube delete                      # destrói o cluster (opcional)
+make k8s-down     # remove só a aplicação (helm uninstall)
+make k8s-clean    # remove a aplicação e para o minikube
+minikube delete   # destrói o cluster por completo (opcional)
 ```
 
 ---
@@ -317,6 +372,7 @@ rentiq/
 
 | Método | Rota                 | Auth | Descrição                              |
 | ------ | -------------------- | ---- | -------------------------------------- |
+| `GET`  | `/health`             | —    | Health check (usado pelos probes do Kubernetes) |
 | `GET`  | `/api/neighborhoods` | —    | Lista bairros disponíveis              |
 | `GET`  | `/api/model/metrics` | —    | Métricas do modelo (R², MAE)           |
 | `POST` | `/api/predictions`   | —    | Gera predição de preço                 |
