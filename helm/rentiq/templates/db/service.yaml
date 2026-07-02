@@ -10,4 +10,4 @@ spec:
     app: db
   ports:
     - port: {{ .Values.db.port }}
-      targetPort: 5432
+      targetPort: {{ .Values.db.port }}

@@ -39,15 +39,15 @@ spec:
                 name: backend-secret
           readinessProbe:
             httpGet:
-              path: /api/neighborhoods
+              path: {{ .Values.backend.healthCheckPath }}
               port: {{ .Values.backend.port }}
-            initialDelaySeconds: 10
-            periodSeconds: 10
+            initialDelaySeconds: {{ .Values.backend.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.backend.probes.readiness.periodSeconds }}
           livenessProbe:
             httpGet:
-              path: /api/neighborhoods
+              path: {{ .Values.backend.healthCheckPath }}
               port: {{ .Values.backend.port }}
-            initialDelaySeconds: 20
-            periodSeconds: 20
+            initialDelaySeconds: {{ .Values.backend.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.backend.probes.liveness.periodSeconds }}
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}

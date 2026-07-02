@@ -25,13 +25,13 @@ spec:
             httpGet:
               path: /
               port: {{ .Values.frontend.port }}
-            initialDelaySeconds: 5
-            periodSeconds: 10
+            initialDelaySeconds: {{ .Values.frontend.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.frontend.probes.readiness.periodSeconds }}
           livenessProbe:
             httpGet:
               path: /
               port: {{ .Values.frontend.port }}
-            initialDelaySeconds: 10
-            periodSeconds: 20
+            initialDelaySeconds: {{ .Values.frontend.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.frontend.probes.liveness.periodSeconds }}
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}

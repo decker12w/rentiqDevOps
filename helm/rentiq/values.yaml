@@ -13,10 +13,6 @@ db:
   password: postgres
   database: am
   port: 5432
-  persistence:
-    enabled: true
-    size: 1Gi
-    storageClassName: ""
   resources:
     requests:
       cpu: 100m
@@ -24,15 +20,23 @@ db:
     limits:
       cpu: 500m
       memory: 512Mi
+  probes:
+    readiness:
+      initialDelaySeconds: 5
+      periodSeconds: 5
+    liveness:
+      initialDelaySeconds: 15
+      periodSeconds: 10
 
 # Backend (FastAPI + Uvicorn)
 backend:
   image:
-    repository: seu-usuario-dockerhub/rentiq-backend
+    repository: josemaia123/rentiq-backend
     tag: latest
     pullPolicy: IfNotPresent
   replicaCount: 1
   port: 8000
+  healthCheckPath: /health
   env:
     allowedOrigins: '["http://k8s.local"]'
     modelPath: "models/modelo_aluguel.pkl"
@@ -46,15 +50,23 @@ backend:
     limits:
       cpu: "1"
       memory: 1Gi
+  probes:
+    readiness:
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    liveness:
+      initialDelaySeconds: 20
+      periodSeconds: 20
 
 # Frontend (React + Nginx)
 frontend:
   image:
-    repository: seu-usuario-dockerhub/rentiq-frontend
+    repository: josemaia123/rentiq-frontend
     tag: latest
     pullPolicy: IfNotPresent
   replicaCount: 1
   port: 80
+  serviceName: frontend
   resources:
     requests:
       cpu: 50m
@@ -62,3 +74,10 @@ frontend:
     limits:
       cpu: 250m
       memory: 256Mi
+  probes:
+    readiness:
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    liveness:
+      initialDelaySeconds: 10
+      periodSeconds: 20

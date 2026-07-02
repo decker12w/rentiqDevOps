@@ -27,6 +27,11 @@ application.add_middleware(
     allow_headers=["*"],
 )
 
+@application.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 application.include_router(neighborhoods_router, prefix="/api")
 application.include_router(predictions_router, prefix="/api")
 application.include_router(model_router, prefix="/api")

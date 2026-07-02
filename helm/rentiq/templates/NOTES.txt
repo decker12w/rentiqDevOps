@@ -1,0 +1,20 @@
+RentIQ foi implantado no namespace "{{ .Release.Namespace }}".
+
+1) Habilite o addon de ingress no Minikube (uma única vez):
+   minikube addons enable ingress
+
+2) Configure o host {{ .Values.ingress.host }} no seu /etc/hosts:
+
+   - Driver docker/Linux:
+       echo "$(minikube ip)  {{ .Values.ingress.host }}" | sudo tee -a /etc/hosts
+
+   - Driver docker no macOS (recomendado): em outro terminal, deixe rodando:
+       minikube tunnel
+     e então use 127.0.0.1:
+       echo "127.0.0.1  {{ .Values.ingress.host }}" | sudo tee -a /etc/hosts
+
+3) Acesse a aplicação:
+   http://{{ .Values.ingress.host }}
+
+4) Verifique o status dos recursos:
+   kubectl get pods,svc,ingress -n {{ .Release.Namespace }}

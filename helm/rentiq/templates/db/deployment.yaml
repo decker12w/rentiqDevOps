@@ -21,7 +21,7 @@ spec:
         - name: db
           image: "{{ .Values.db.image.repository }}:{{ .Values.db.image.tag }}"
           ports:
-            - containerPort: 5432
+            - containerPort: {{ .Values.db.port }}
           envFrom:
             - secretRef:
                 name: db-secret
@@ -32,20 +32,15 @@ spec:
           readinessProbe:
             exec:
               command: ["pg_isready", "-U", {{ .Values.db.user | quote }}]
-            initialDelaySeconds: 5
-            periodSeconds: 5
+            initialDelaySeconds: {{ .Values.db.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.db.probes.readiness.periodSeconds }}
           livenessProbe:
             exec:
               command: ["pg_isready", "-U", {{ .Values.db.user | quote }}]
-            initialDelaySeconds: 15
-            periodSeconds: 10
+            initialDelaySeconds: {{ .Values.db.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.db.probes.liveness.periodSeconds }}
           resources:
             {{- toYaml .Values.db.resources | nindent 12 }}
       volumes:
         - name: db-data
-          {{- if .Values.db.persistence.enabled }}
-          persistentVolumeClaim:
-            claimName: db-pvc
-          {{- else }}
           emptyDir: {}
-          {{- end }}
