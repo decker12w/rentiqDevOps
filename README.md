@@ -66,45 +66,9 @@ A aplicação também pode ser implantada em um cluster Kubernetes local via [Mi
 
 O deploy inteiro é automatizado por targets do [`Makefile`](Makefile) — não é preciso rodar `helm`/`minikube` manualmente. As duas primeiras opções abaixo usam o Makefile; a terceira mostra os comandos crus, caso queira entender ou depurar o que está por trás.
 
-### Opção 1 — Deploy a partir do Docker Hub (recomendado)
+### Opção 1 — Caminho das pedras (passo a passo manual, sem Makefile)
 
-As imagens já estão publicadas no Docker Hub (`josemaia123/rentiq-backend` e `josemaia123/rentiq-frontend`), então basta rodar o deploy puxando de lá:
-
-```bash
-make k8s-up-pull   # deploy puxando as imagens já publicadas do Docker Hub (pullPolicy=Always)
-```
-
-Só preencha `DOCKERHUB_USER=<seu-usuario-dockerhub>` se você quiser buildar e publicar sua própria versão das imagens em vez de usar as já disponíveis:
-
-```bash
-make DOCKERHUB_USER=<seu-usuario-dockerhub> TAG=latest k8s-push     # builda, dá push e (se o minikube estiver de pé) já carrega nele
-make DOCKERHUB_USER=<seu-usuario-dockerhub> TAG=latest k8s-up-pull  # deploy puxando as suas imagens do Docker Hub
-```
-
-Configuração manual única, exige `sudo` (por isso não é automatizada):
-
-```bash
-echo "127.0.0.1  k8s.local" | sudo tee -a /etc/hosts
-sudo minikube tunnel   # rodar num terminal à parte e deixar em execução
-```
-
-Acesse em http://k8s.local. Credenciais de demonstração: `demo@rentiq.com` / `rentiq123`.
-
-### Opção 2 — Build local, sem Docker Hub (iteração rápida)
-
-Sem depender de internet/registry — builda as imagens direto no daemon Docker do minikube:
-
-```bash
-make k8s-up
-```
-
-Isso faz, em ordem: `minikube start`, ativa o addon `ingress`, builda as imagens de backend e frontend direto no minikube, roda `helm upgrade --install` e espera os três Deployments (`db`, `backend`, `frontend`) ficarem prontos. Precisa da mesma configuração manual (`/etc/hosts` + `minikube tunnel`) acima.
-
-Depois de qualquer mudança no código, rode `make k8s-up` de novo — é idempotente (`helm upgrade --install` só reaplica o que mudou).
-
-### Opção 3 — Caminho das pedras (passo a passo manual, sem Makefile)
-
-Útil pra entender o que os targets acima fazem por baixo, ou pra depurar quando algo dá errado.
+Útil pra entender o que os targets das opções abaixo fazem por baixo, ou pra depurar quando algo dá errado.
 
 **1. Suba o cluster**
 
@@ -174,6 +138,42 @@ echo "127.0.0.1  k8s.local" | sudo tee -a /etc/hosts
 | Interface web | http://k8s.local |
 
 As credenciais de demonstração são as mesmas do Docker Compose (`demo@rentiq.com` / `rentiq123`).
+
+### Opção 2 — Deploy a partir do Docker Hub (recomendado)
+
+As imagens já estão publicadas no Docker Hub (`josemaia123/rentiq-backend` e `josemaia123/rentiq-frontend`), então basta rodar o deploy puxando de lá:
+
+```bash
+make k8s-up-pull   # deploy puxando as imagens já publicadas do Docker Hub (pullPolicy=Always)
+```
+
+Só preencha `DOCKERHUB_USER=<seu-usuario-dockerhub>` se você quiser buildar e publicar sua própria versão das imagens em vez de usar as já disponíveis:
+
+```bash
+make DOCKERHUB_USER=<seu-usuario-dockerhub> TAG=latest k8s-push     # builda, dá push e (se o minikube estiver de pé) já carrega nele
+make DOCKERHUB_USER=<seu-usuario-dockerhub> TAG=latest k8s-up-pull  # deploy puxando as suas imagens do Docker Hub
+```
+
+Configuração manual única, exige `sudo` (por isso não é automatizada):
+
+```bash
+echo "127.0.0.1  k8s.local" | sudo tee -a /etc/hosts
+sudo minikube tunnel   # rodar num terminal à parte e deixar em execução
+```
+
+Acesse em http://k8s.local. Credenciais de demonstração: `demo@rentiq.com` / `rentiq123`.
+
+### Opção 3 — Build local, sem Docker Hub (iteração rápida)
+
+Sem depender de internet/registry — builda as imagens direto no daemon Docker do minikube:
+
+```bash
+make k8s-up
+```
+
+Isso faz, em ordem: `minikube start`, ativa o addon `ingress`, builda as imagens de backend e frontend direto no minikube, roda `helm upgrade --install` e espera os três Deployments (`db`, `backend`, `frontend`) ficarem prontos. Precisa da mesma configuração manual (`/etc/hosts` + `minikube tunnel`) acima.
+
+Depois de qualquer mudança no código, rode `make k8s-up` de novo — é idempotente (`helm upgrade --install` só reaplica o que mudou).
 
 ### Customizando valores
 
